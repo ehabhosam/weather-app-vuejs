@@ -1,32 +1,46 @@
 <template>
   <div class="containerr">
-    <h3 class="brand">the weather</h3>
-    <div>
-      <h1 class="temp">16&#176;</h1>
-      <div class="city-time">
-        <h1 class="name">Cairo</h1>
-        <small>
-          <span class="time">06:09</span>
-          -
-          <span class="date">Monday Sep 7</span>
-        </small>
-      </div>
-      <div class="weather">
-        <img
-          src="../assets/icons/snowicon.png"
+    <h3 class="brand">Weather Now</h3>
+    <table>
+      <tr class="left-col temp">
+        <td colspan="2">{{temprature}}&#176;</td>
+      </tr>
+      <tr class="middle-col">
+        <td class="upperRow" :style="{'font-size': windowWidth <=500? 30/cityName.length + 'vh': '3.7rem'}">{{cityName}}</td>
+        <td class="dateTime">
+          <span class="time">{{time}}&nbsp;</span>
+          -&nbsp;
+          <span class="date">11/9/2022</span>
+        </td>
+      </tr>
+      <tr class="right-col">
+        <td class="upperRow"><div style="width:6vh; height: 6vh;"><img
+          :src="imageSrc"
           alt="icon"
-          width="50"
-          height="50"
-        />
-        <span class="condition">Rainy</span>
-      </div>
-    </div>
+        /></div></td>
+        <td>{{condition}}</td>
+      </tr>
+    </table>
   </div>
 </template>
 
 <script>
   export default {
-    name: 'WeatherStatus'
+    name: 'WeatherStatus', 
+    data: ()=>({
+      windowWidth: window.innerWidth
+    }),
+    props: {
+      temprature: [String, Number],
+      cityName: String,
+      time: String, 
+      date: String, 
+      condition: String,
+      imageSrc: String
+    },
+    mounted(){
+      window.addEventListener('resize', () => { this.windowWidth = window.innerWidth} )
+    }
   }
 
 </script>
@@ -49,22 +63,83 @@
   justify-content: center;
   align-items: center;
 }
-.city-time,
-.temp,
-.weather {
-  margin: 0 1em;
+
+table {
+  display: flex; 
+  width: 90vw;
+  max-width: 650px;
 }
-.city-time > h1 {
+td {
+  display: flex;
+  flex-direction: column;
+  text-align: justify;
+  font-size: calc(1px * 100vw2);
+}
+
+tr {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+.dateTime {
+  display: flex;
+  flex-direction: row;
+}
+.upperRow {
+  height: 7vh; 
+  font-size: 3rem;
+}
+.upperRow > div > img {
+  scale: 2
+}
+.left-col {
+  justify-content: flex-start;
+}
+.middle-col {
+  padding-left: 10px
+}
+.right-col {
+  align-items: center;
+}
+
+  .temp {
+  font-size: 6rem;
   margin: 0;
-  margin-bottom: 0.2em;
-  font-size: 4em;
 }
-.temp {
-  font-size: 7em;
+.name {
+  font-size: 10px; 
+}
+.left-col {
+  width: 25%;
+}
+.middle-col {
+  width: auto;
+  max-width: 45%;
+}
+.right-col {
+  width: 25%;
+}
+
+
+@media screen and (max-width: 500px) {
+  .temp {
+  font-size: 4rem;
   margin: 0;
 }
-.weather img {
-  display: block;
-  margin: 0.5em 0;
+.name {
+  font-size: 10px; 
 }
+.left-col {
+  width: 25%;
+}
+.middle-col {
+  width: 45%;
+}
+.right-col {
+  width: 25%;
+}
+}
+/* tr > td:nth-child(2){
+  translate: 0 -20px;
+} */
 </style>

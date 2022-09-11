@@ -17,15 +17,15 @@
       <h4>Weather Details</h4>
       <li>
         <span>Cloudy</span>
-        <span class="cloud">89%</span>
+        <span class="cloud">{{cloudy}}%</span>
       </li>
       <li>
         <span>Humidity</span>
-        <span class="humidity">64%</span>
+        <span class="humidity">{{humidity}}%</span>
       </li>
       <li>
         <span>Wind</span>
-        <span class="wind">4km/h</span>
+        <span class="wind">{{wind}}km/h</span>
       </li>
     </ul>
   </div>
@@ -33,7 +33,12 @@
 
 <script>
   export default {
-    name: 'AppPannel'
+    name: 'AppPannel',
+    props: {
+      cloudy: [String, Number],
+      humidity: [String, Number],
+      wind: [String, Number]  
+    }
   }
 
 </script>
