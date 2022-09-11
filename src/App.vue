@@ -1,5 +1,8 @@
 <template>
-  <div class="weather-app">
+  <div class="loader-container" v-if="bgsrc.length === 0">
+    <div class="lds-ellipsis" ><div></div><div></div><div></div><div></div></div>
+  </div>
+  <div class="weather-app" v-else>
     <img :src="bgsrc? require(`${bgsrc}`): ''" alt="Background">
     <WeatherStatus 
       :temprature="this.weather.temprature"
@@ -85,7 +88,7 @@
             weather[0].main === 'Rain'){
               this.bgsrc = './assets/day/rainyday.jpg';
             }else {
-              this.bgsrc = './assets/day/sunnyday.jpg'
+              this.bgsrc = './assets/day/suunyday.jpg'
             }
           }else {
             // night
@@ -115,7 +118,30 @@
             wind: wind.speed,
             imageSrc: source
           }
-          console.log(this.weather)
+          // setting background based on weather
+          if (weather[0].icon[2] === 'd'){
+            console.log('day')
+            // day
+            if (weather[0].main === 'Snow' ||
+            weather[0].main === 'Thunderstorm' ||
+            weather[0].main === 'Drizzle' ||
+            weather[0].main === 'Rain'){
+              this.bgsrc = './assets/day/rainyday.jpg';
+            }else {
+              this.bgsrc = './assets/day/suunyday.jpg'
+            }
+          }else {
+            // night
+            if (weather[0].main === 'Snow' ||
+            weather[0].main === 'Thunderstorm' ||
+            weather[0].main === 'Drizzle' ||
+            weather[0].main === 'Rain'){
+              this.bgsrc = './assets/night/snownight.jpg';
+            }else {
+              this.bgsrc = './assets/night/cloudynight.jpg'
+            }
+          }
+
         },
 
         getNow() {
@@ -133,7 +159,9 @@
       },
       mounted(){
         const perm = navigator.geolocation;
-        perm.getCurrentPosition(this.getCurrentLocation, this.permissionFailed);
+        setTimeout(()=>{
+          perm.getCurrentPosition(this.getCurrentLocation, this.permissionFailed);
+        },2000)
       },
       created() {
         this.getNow()
@@ -170,7 +198,8 @@ h2 {
 .weather-app > img {
   object-fit: cover;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  position: absolute;
 }
 .weather-app::before {
   content: "";
@@ -201,4 +230,71 @@ h2 {
     min-height: 40em;
   }
 }
+
+/* loader */
+.loader-container {
+  background-image: url('./assets/day/suunyday.jpg');
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .5s;
+}
+.lds-ellipsis {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-ellipsis div {
+  position: absolute;
+  top: 33px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #fff;
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+.lds-ellipsis div:nth-child(1) {
+  left: 8px;
+  animation: lds-ellipsis1 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(2) {
+  left: 8px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(3) {
+  left: 32px;
+  animation: lds-ellipsis2 0.6s infinite;
+}
+.lds-ellipsis div:nth-child(4) {
+  left: 56px;
+  animation: lds-ellipsis3 0.6s infinite;
+}
+@keyframes lds-ellipsis1 {
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lds-ellipsis3 {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+@keyframes lds-ellipsis2 {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(24px, 0);
+  }
+}
+
 </style>
