@@ -114,7 +114,6 @@ tr {
 }
 .middle-col {
   width: auto;
-  max-width: 45%;
 }
 .right-col {
   width: 25%;

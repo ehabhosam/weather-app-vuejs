@@ -1,16 +1,13 @@
 <template>
   <div class="panel">
-    <form id="locationInput">
-      <input type="text" class="search" placeholder="Search Location..." />
-      <button type="submit" class="submit">
+    <div id="locationInput">
+      <input v-model="searchValue" type="text" class="search" placeholder="Search Location..." />
+      <button class="submit" @click="handleSearch(searchValue.split(' ')[0])">
         <i class="fas fa-search"></i>
       </button>
-    </form>
+    </div>
     <ul class="cities">
-      <li class="city">Cairo</li>
-      <li class="city">Califronia</li>
-      <li class="city">Paris</li>
-      <li class="city">Tokyo</li>
+      <li class="city" v-for="city in citiesArray" :key="city" @click="setViewCity(city)">{{city}}</li>
     </ul>
 
     <ul class="details">
@@ -34,10 +31,16 @@
 <script>
   export default {
     name: 'AppPannel',
+    data: ()=>({
+      searchValue: '', 
+      citiesArray: ['Cairo', 'California', 'Paris', 'Tokyo']
+    }),
     props: {
       cloudy: [String, Number],
       humidity: [String, Number],
-      wind: [String, Number]  
+      wind: [String, Number], 
+      handleSearch: Function,
+      setViewCity: Function, 
     }
   }
 
@@ -59,7 +62,7 @@
   padding: 3em 2em;
   overflow-y: scroll;
 }
-.panel form {
+.panel div {
   margin-bottom: 2em;
 }
 .submit {

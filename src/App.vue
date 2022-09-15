@@ -3,7 +3,9 @@
     <div class="lds-ellipsis" ><div></div><div></div><div></div><div></div></div>
   </div>
   <div class="weather-app" v-else>
-    <img :src="bgsrc? require(`${bgsrc}`): ''" alt="Background">
+
+    <img v-for="(background_s , i) in backgroundSources" :src="require(`${bgsrc}`)" alt="background" :key="i" :style="background_s === bgsrc && viewStylesObject">
+    
     <WeatherStatus 
       :temprature="this.weather.temprature"
       :cityName="this.weather.cityName"
@@ -16,15 +18,19 @@
       :cloudy="this.weather.cloudy"
       :humidity="this.weather.humidity"
       :wind="this.weather.wind"
+      :handleSearch="this.getWeatherData"
+      :setViewCity="this.getWeatherData"
     />
   </div>
 </template>
 
 <script>
   import axios from 'axios'; 
+  import { ref } from "vue";  
   import WeatherStatus from "./components/WeatherStatus.vue";
   import AppPannel from "./components/AppPannel.vue";
-
+  import { useToast, POSITION } from 'vue-toastification'
+  import "vue-toastification/dist/index.css";
   const openWeatherMapApiKey = 'edff1731bf07907b1780b8f660dd1b79'; 
 
   export default {
@@ -32,6 +38,7 @@
       WeatherStatus,
       AppPannel,
     },
+
     data: ()=> ({
         weather: {
           cityName: "",
@@ -50,62 +57,88 @@
           time: "",
           date: "",
         },
-        bgsrc: ""
+        bgsrc: "",
       }),
+      setup() {
+        // Get toast interface
+        const toast = useToast();
+        // Make it available inside methods
+        const backgroundSources = ref([
+          "./assets/night/cloudynight.jpg",
+          "./assets/day/rainyday.jpg",
+          "./assets/day/suunyday.jpg",
+          "./assets/night/snownight.jpg",
+        ])
+        const viewStylesObject = { visibility: "visible", opacity: 1}
+        return { toast, backgroundSources, viewStylesObject  }
+      },
       methods: {
-        getCurrentLocation({coords}){
+        getCurrentLocation({ coords }){
+          console.log('getting current location')
           const { longitude, latitude } = coords;
           this.location = {
             longitude,
             latitude
           }
+          console.log('heading to weather')
           this.getWeatherData(); 
         },
 
-        async getWeatherData(){
-          //fetching weather data from OpenWeatherApi
-          const result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${this.location.latitude.toFixed(2)}&lon=${this.location.longitude.toFixed(2)}&appid=${openWeatherMapApiKey}&units=metric`);
-          const {name, main, weather, clouds,wind} = result.data;
-          const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`; 
-          // setting fetched data
-          this.weather = {
-            cityName: name,
-            temprature: Math.round(main.temp), 
-            condition: weather[0].main,
-            cloudy: clouds.all,
-            humidity: main.humidity,
-            wind: wind.speed,
-            imageSrc: source
-          }
-
-          // setting background based on weather
-          if (weather[0].icon[2] === 'd'){
-            console.log('day')
-            // day
-            if (weather[0].main === 'Snow' ||
-            weather[0].main === 'Thunderstorm' ||
-            weather[0].main === 'Drizzle' ||
-            weather[0].main === 'Rain'){
-              this.bgsrc = './assets/day/rainyday.jpg';
-            }else {
-              this.bgsrc = './assets/day/suunyday.jpg'
+        async getWeatherData(cityName = ""){
+          if (cityName.length > 0){
+            try {
+              var result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${openWeatherMapApiKey}&units=metric`);
+            } catch(e){
+              console.log('an error occurred')
             }
           }else {
-            // night
-            if (weather[0].main === 'Snow' ||
-            weather[0].main === 'Thunderstorm' ||
-            weather[0].main === 'Drizzle' ||
-            weather[0].main === 'Rain'){
-              this.bgsrc = './assets/night/snownight.jpg';
-            }else {
-              this.bgsrc = './assets/night/cloudynight.jpg'
+            result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${this.location.latitude.toFixed(2)}&lon=${this.location.longitude.toFixed(2)}&appid=${openWeatherMapApiKey}&units=metric`);
+          }
+          try{
+            // fetching weather data from OpenWeatherApi
+            const {name, main, weather, clouds,wind} = result.data;
+            const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`; 
+            // setting fetched data
+            this.weather = {
+              cityName: name,
+              temprature: Math.round(main.temp), 
+              condition: weather[0].main,
+              cloudy: clouds.all,
+              humidity: main.humidity,
+              wind: wind.speed,
+              imageSrc: source
             }
+
+            // setting background based on weather
+            if (weather[0].icon[2] === 'd'){
+              // day
+              if (weather[0].main === 'Snow' ||
+              weather[0].main === 'Thunderstorm' ||
+              weather[0].main === 'Drizzle' ||
+              weather[0].main === 'Rain'){
+                this.bgsrc = './assets/day/rainyday.jpg';
+              }else {
+                this.bgsrc = './assets/day/suunyday.jpg'
+              }
+            }else {
+              // night
+              if (weather[0].main === 'Snow' ||
+              weather[0].main === 'Thunderstorm' ||
+              weather[0].main === 'Drizzle' ||
+              weather[0].main === 'Rain'){
+                this.bgsrc = './assets/night/snownight.jpg';
+              }else {
+                this.bgsrc = './assets/night/cloudynight.jpg'
+              }
+            }
+          }catch(err) { 
+            this.toast.error("This City is not found.", { timeout: 2000, position: POSITION.TOP_LEFT} );
           }
         },
 
         async permissionFailed(){
-          // alert("Location Permission is denied. We will get default City weather (Cairo).");
-          const result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=Mansoura&appid=${openWeatherMapApiKey}&units=metric`);
+          this.toast.info('location permitisson denied. Default city (Cairo) will be used.')
+          const result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=cairo&appid=${openWeatherMapApiKey}&units=metric`);
           console.log(result.data)
           const {name, main, weather, clouds,wind} = result.data;
           const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`; 
@@ -120,7 +153,6 @@
           }
           // setting background based on weather
           if (weather[0].icon[2] === 'd'){
-            console.log('day')
             // day
             if (weather[0].main === 'Snow' ||
             weather[0].main === 'Thunderstorm' ||
@@ -141,7 +173,6 @@
               this.bgsrc = './assets/night/cloudynight.jpg'
             }
           }
-
         },
 
         getNow() {
@@ -153,19 +184,24 @@
             date,
           }
         }, 
-        getImgUrl(picurl) {
-          return require(picurl)
+        handleSearch(passedValue){
+          console.log(passedValue); 
+        },
+        isViewing(src){
+          console.log(src)
+          console.log(this.bgsrc)
+          console.log(this.$bgsrc === src)
+          return src === this.bgsrc;
         }
       },
       mounted(){
+      },
+      created() {
+        this.getNow()
         const perm = navigator.geolocation;
         setTimeout(()=>{
           perm.getCurrentPosition(this.getCurrentLocation, this.permissionFailed);
         },2000)
-      },
-      created() {
-        this.getNow()
-        setInterval(this.getNow, 5000);
       }
   };
 </script>
@@ -191,8 +227,7 @@ h2 {
   background-position: center;
   color: #fff;
   position: relative;
-  transition: 500ms;
-  opacity: 1;
+  
   overflow-x: hidden;
 }
 .weather-app > img {
@@ -200,7 +235,23 @@ h2 {
   width: 100%;
   height: 100vh;
   position: absolute;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s, opacity 0.5s linear;
 }
+
+
+/* .fade-enter-active,
+.fade-leave-active {
+  transition: opacity 3s !important; 
+  scale: 2;
+}
+
+.fade-enter,
+.fade-leave-to{
+  opacity: 0 !important; 
+} */
+
 .weather-app::before {
   content: "";
   position: absolute;
@@ -298,3 +349,6 @@ h2 {
 }
 
 </style>
+
+
+
