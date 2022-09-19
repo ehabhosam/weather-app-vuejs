@@ -57,6 +57,7 @@
         async getForecastData(){
             await axios.get(this.getForecastServiceUrl()).then((data) => {
                 this.forecastData = data.data;
+                console.log(data.data); 
 
                 this.forecastData.minDaysTemp = 99999999;
                 this.forecastData.maxDaysTemp = -99999999;

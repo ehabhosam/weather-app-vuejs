@@ -11,8 +11,7 @@
       :cityName="this.weather.cityName"
       :condition="this.weather.condition"
       :imageSrc="this.weather.imageSrc"
-      :date="this.timestamp.date"
-      :time="this.timestamp.time"
+      :timezone="this.timezone"
     />
     <component :is="currentView" v-bind="panelComponentProps"/>
 
@@ -26,7 +25,7 @@
   import WeatherStatus from "./components/WeatherStatus.vue";
   import AppPannel from "./components/AppPannel.vue";
   import WeatherMoreDetails from "./components/WeatherMoreDetails.vue";
-  import { useToast, POSITION } from 'vue-toastification'
+  import { useToast } from 'vue-toastification'
   import "vue-toastification/dist/index.css";
   const openWeatherMapApiKey = 'edff1731bf07907b1780b8f660dd1b79';
 
@@ -56,10 +55,7 @@
           longitude: null,
           latitude: null,
         },
-        timestamp: {
-          time: "",
-          date: "",
-        },
+        timezone:null,
         bgsrc: "",
       }),
       setup() {
@@ -76,95 +72,70 @@
         return { toast, backgroundSources, viewStylesObject  }
       },
       methods: {
-        getCurrentLocation({ coords }){
-          console.log('getting current location')
+        async getCurrentLocation({ coords }){
           const { longitude, latitude } = coords;
           this.location = {
             longitude,
             latitude
           }
-          console.log('heading to weather')
-          this.getWeatherData();
+          const result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${this.location.latitude.toFixed(2)}&lon=${this.location.longitude.toFixed(2)}&appid=${openWeatherMapApiKey}&units=metric`);
+          const cityName = result.data.name;
+          this.fetchWeatherData(cityName);
         },
-
-        async getWeatherData(cityName = ""){
-          if (cityName.length > 0){
-            try {
-              var result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${openWeatherMapApiKey}&units=metric`);
-            } catch(e){
-              console.log('an error occurred')
-            }
-          }else {
-            result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${this.location.latitude.toFixed(2)}&lon=${this.location.longitude.toFixed(2)}&appid=${openWeatherMapApiKey}&units=metric`);
-          }
-          try{
-            // fetching weather data from OpenWeatherApi
-            const {name, main, weather, clouds,wind, coord} = result.data;
-            const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`;
-            // setting fetched data
+        async fetchWeatherData(cityName = "Cairo"){
+          const FORECAST_SERVICE_API_URL = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/";
+          const FORECAST_SERVICE_API_KEY = "NBXC3DJ3JW93CZASYE8XWA3PU";
+          let link; 
+          link = `${FORECAST_SERVICE_API_URL}${cityName}?unitGroup=metric&elements=datetime%2Ctempmax%2Ctempmin%2Ctemp%2Cconditions%2Cicon%2Cwindspeed%2Chumidity%2Ccloudcover%2CdatetimeEpoch&include=days&key=${FORECAST_SERVICE_API_KEY}&contentType=json`
+          try {
+            const result = await axios.get(link); 
+            const { resolvedAddress, days, timezone } = result.data;
+            const { temp, conditions, cloudcover, humidity, windspeed, icon } = days[0];
             this.weather = {
-              cityName: name,
-              temprature: Math.round(main.temp),
-              condition: weather[0].main,
-              cloudy: clouds.all,
-              humidity: main.humidity,
-              wind: wind.speed,
-              imageSrc: source
-            }
-
-            this.location = {
-              longitude: coord.lon,
-              latitude: coord.lat,
-            }
-
-            // setting background based on weather
-            if (weather[0].icon[2] === 'd'){
-              // day
-              if (weather[0].main === 'Snow' ||
-              weather[0].main === 'Thunderstorm' ||
-              weather[0].main === 'Drizzle' ||
-              weather[0].main === 'Rain'){
-                this.bgsrc = './assets/day/rainyday.jpg';
-              }else {
-                this.bgsrc = './assets/day/suunyday.jpg'
+                cityName: resolvedAddress.split(',')[0],
+                temprature: Math.round(temp),
+                condition: conditions,
+                cloudy: cloudcover,
+                humidity,
+                wind: windspeed,
+                imageSrc: icon
               }
-            }else {
-              // night
-              if (weather[0].main === 'Snow' ||
-              weather[0].main === 'Thunderstorm' ||
-              weather[0].main === 'Drizzle' ||
-              weather[0].main === 'Rain'){
-                this.bgsrc = './assets/night/snownight.jpg';
+            this.timezone = timezone; 
+              if (icon.includes('day')){
+                // day
+                if (icon.includes('snow') ||
+                icon.includes('thunder') ||
+                icon.includes('showers') ||
+                icon.includes('hail') ||
+                icon.includes('sleet') ||
+                icon.includes('rain')){
+                  this.bgsrc = './assets/day/rainyday.jpg';
+                }else {
+                  this.bgsrc = './assets/day/suunyday.jpg'
+                }
               }else {
-                this.bgsrc = './assets/night/cloudynight.jpg'
-              }
-            }
-          }catch(err) {
-            this.toast.error("This City is not found.", { timeout: 2000, position: POSITION.TOP_LEFT} );
+                // night
+                if (icon.includes('snow') ||
+                icon.includes('thunder') ||
+                icon.includes('showers') ||
+                icon.includes('hail') ||
+                icon.includes('sleet') ||
+                icon.includes('rain')){
+                  this.bgsrc = './assets/night/snownight.jpg';
+                }else {
+                  this.bgsrc = './assets/night/cloudynight.jpg'
+                }
+              } 
+          } catch (error) {
+            this.toast.error('Invaild address');
           }
         },
 
         async permissionFailed(){
           this.toast.info('location permission denied. Default city (Cairo) will be used.')
-          this.getWeatherData("cairo");
-        },
-
-        getNow() {
-          const today = new Date();
-          const date = today.getDate()+'/'+(today.getMonth()+1)+'/'+today.getFullYear();
-          const time = today.getHours() + ":" + today.getMinutes();
-          this.timestamp = {
-            time,
-            date,
-          }
-        },
-        handleSearch(passedValue){
-          console.log(passedValue);
+          this.fetchWeatherData();
         },
         isViewing(src){
-          console.log(src)
-          console.log(this.bgsrc)
-          console.log(this.$bgsrc === src)
           return src === this.bgsrc;
         }
       },
@@ -183,8 +154,8 @@
               cloudy: this.weather.cloudy,
               humidity: this.weather.humidity,
               wind: this.weather.wind,
-              handleSearch: this.getWeatherData,
-              setViewCity: this.getWeatherData
+              handleSearch: this.fetchWeatherData,
+              setViewCity: this.fetchWeatherData
             }
           } else if(this.currentView.name === 'WeatherMoreDetails') {
             return {
@@ -196,7 +167,6 @@
         }
       },
       created() {
-        this.getNow()
         const perm = navigator.geolocation;
         setTimeout(()=>{
           perm.getCurrentPosition(this.getCurrentLocation, this.permissionFailed);

@@ -33,7 +33,7 @@
     name: 'AppPannel',
     data: ()=>({
       searchValue: '', 
-      citiesArray: ['Cairo', 'California', 'Paris', 'Tokyo']
+      citiesArray: ['Cairo', 'Tokyo', 'Paris', 'Mexico']
     }),
     props: {
       cloudy: [String, Number],
