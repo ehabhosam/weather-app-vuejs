@@ -3,7 +3,10 @@
     <h3 class="brand">Weather Now</h3>
     <table>
       <tr class="left-col temp">
-        <td colspan="2">{{temprature}}&#176;</td>
+        <td colspan="2" style="position: relative">
+          {{temprature}}&#176;
+          <a class="more-details-btn" href="#/more-details">More Details</a>
+        </td>
       </tr>
       <tr class="middle-col">
         <td class="upperRow" :style="{'font-size': windowWidth <=500? 30/cityName.length + 'vh': '3.7rem'}">{{cityName}}</td>
@@ -26,15 +29,15 @@
 
 <script>
   export default {
-    name: 'WeatherStatus', 
+    name: 'WeatherStatus',
     data: ()=>({
       windowWidth: window.innerWidth
     }),
     props: {
       temprature: [String, Number],
       cityName: String,
-      time: String, 
-      date: String, 
+      time: String,
+      date: String,
       condition: String,
       imageSrc: String
     },
@@ -65,7 +68,7 @@
 }
 
 table {
-  display: flex; 
+  display: flex;
   width: 90vw;
   max-width: 650px;
 }
@@ -86,7 +89,7 @@ tr {
   flex-direction: row;
 }
 .upperRow {
-  height: 7vh; 
+  height: 7vh;
   font-size: 3rem;
 }
 .upperRow > div > img {
@@ -107,7 +110,7 @@ tr {
   margin: 0;
 }
 .name {
-  font-size: 10px; 
+  font-size: 10px;
 }
 .left-col {
   width: 25%;
@@ -126,7 +129,7 @@ tr {
   margin: 0;
 }
 .name {
-  font-size: 10px; 
+  font-size: 10px;
 }
 .left-col {
   width: 25%;
@@ -141,4 +144,11 @@ tr {
 /* tr > td:nth-child(2){
   translate: 0 -20px;
 } */
+a.more-details-btn {
+    font-size: 15px;
+    position: absolute;
+    bottom: 10px;
+    text-decoration: none;
+    color: #fa6d1b;
+}
 </style>

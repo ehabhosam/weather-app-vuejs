@@ -5,8 +5,8 @@
   <div class="weather-app" v-else>
 
     <img v-for="(background_s , i) in backgroundSources" :src="require(`${bgsrc}`)" alt="background" :key="i" :style="background_s === bgsrc && viewStylesObject">
-    
-    <WeatherStatus 
+
+    <WeatherStatus
       :temprature="this.weather.temprature"
       :cityName="this.weather.cityName"
       :condition="this.weather.condition"
@@ -14,24 +14,26 @@
       :date="this.timestamp.date"
       :time="this.timestamp.time"
     />
-    <AppPannel 
-      :cloudy="this.weather.cloudy"
-      :humidity="this.weather.humidity"
-      :wind="this.weather.wind"
-      :handleSearch="this.getWeatherData"
-      :setViewCity="this.getWeatherData"
-    />
+    <component :is="currentView" v-bind="panelComponentProps"/>
+
+
   </div>
 </template>
 
 <script>
-  import axios from 'axios'; 
-  import { ref } from "vue";  
+  import axios from 'axios';
+  import { ref } from "vue";
   import WeatherStatus from "./components/WeatherStatus.vue";
   import AppPannel from "./components/AppPannel.vue";
+  import WeatherMoreDetails from "./components/WeatherMoreDetails.vue";
   import { useToast, POSITION } from 'vue-toastification'
   import "vue-toastification/dist/index.css";
-  const openWeatherMapApiKey = 'edff1731bf07907b1780b8f660dd1b79'; 
+  const openWeatherMapApiKey = 'edff1731bf07907b1780b8f660dd1b79';
+
+  const panelRoutes = {
+    '/': AppPannel,
+    '/more-details': WeatherMoreDetails
+  }
 
   export default {
     components: {
@@ -40,6 +42,7 @@
     },
 
     data: ()=> ({
+        currentPath: window.location.hash,
         weather: {
           cityName: "",
           temprature: "",
@@ -50,8 +53,8 @@
           imageSrc: ""
         },
         location: {
-          longitude: null, 
-          latitude: null, 
+          longitude: null,
+          latitude: null,
         },
         timestamp: {
           time: "",
@@ -81,7 +84,7 @@
             latitude
           }
           console.log('heading to weather')
-          this.getWeatherData(); 
+          this.getWeatherData();
         },
 
         async getWeatherData(cityName = ""){
@@ -96,17 +99,22 @@
           }
           try{
             // fetching weather data from OpenWeatherApi
-            const {name, main, weather, clouds,wind} = result.data;
-            const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`; 
+            const {name, main, weather, clouds,wind, coord} = result.data;
+            const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`;
             // setting fetched data
             this.weather = {
               cityName: name,
-              temprature: Math.round(main.temp), 
+              temprature: Math.round(main.temp),
               condition: weather[0].main,
               cloudy: clouds.all,
               humidity: main.humidity,
               wind: wind.speed,
               imageSrc: source
+            }
+
+            this.location = {
+              longitude: coord.lon,
+              latitude: coord.lat,
             }
 
             // setting background based on weather
@@ -131,48 +139,14 @@
                 this.bgsrc = './assets/night/cloudynight.jpg'
               }
             }
-          }catch(err) { 
+          }catch(err) {
             this.toast.error("This City is not found.", { timeout: 2000, position: POSITION.TOP_LEFT} );
           }
         },
 
         async permissionFailed(){
-          this.toast.info('location permitisson denied. Default city (Cairo) will be used.')
-          const result = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=cairo&appid=${openWeatherMapApiKey}&units=metric`);
-          console.log(result.data)
-          const {name, main, weather, clouds,wind} = result.data;
-          const source =  `http://openweathermap.org/img/wn/${weather[0].icon}.png`; 
-          this.weather = {
-            cityName: name,
-            temprature: Math.round(main.temp), 
-            condition: weather[0].main,
-            cloudy: clouds.all,
-            humidity: main.humidity,
-            wind: wind.speed,
-            imageSrc: source
-          }
-          // setting background based on weather
-          if (weather[0].icon[2] === 'd'){
-            // day
-            if (weather[0].main === 'Snow' ||
-            weather[0].main === 'Thunderstorm' ||
-            weather[0].main === 'Drizzle' ||
-            weather[0].main === 'Rain'){
-              this.bgsrc = './assets/day/rainyday.jpg';
-            }else {
-              this.bgsrc = './assets/day/suunyday.jpg'
-            }
-          }else {
-            // night
-            if (weather[0].main === 'Snow' ||
-            weather[0].main === 'Thunderstorm' ||
-            weather[0].main === 'Drizzle' ||
-            weather[0].main === 'Rain'){
-              this.bgsrc = './assets/night/snownight.jpg';
-            }else {
-              this.bgsrc = './assets/night/cloudynight.jpg'
-            }
-          }
+          this.toast.info('location permission denied. Default city (Cairo) will be used.')
+          this.getWeatherData("cairo");
         },
 
         getNow() {
@@ -183,9 +157,9 @@
             time,
             date,
           }
-        }, 
+        },
         handleSearch(passedValue){
-          console.log(passedValue); 
+          console.log(passedValue);
         },
         isViewing(src){
           console.log(src)
@@ -195,6 +169,31 @@
         }
       },
       mounted(){
+        window.addEventListener('hashchange', () => {
+          this.currentPath = window.location.hash
+        });
+      },
+      computed: {
+        currentView() {
+          return panelRoutes[this.currentPath.slice(1) || '/'] || "<template><h1>404 Not found</h1></template>"
+        },
+        panelComponentProps() {
+          if (this.currentView.name === 'AppPannel') {
+            return {
+              cloudy: this.weather.cloudy,
+              humidity: this.weather.humidity,
+              wind: this.weather.wind,
+              handleSearch: this.getWeatherData,
+              setViewCity: this.getWeatherData
+            }
+          } else if(this.currentView.name === 'WeatherMoreDetails') {
+            return {
+              lat: this.location.latitude,
+              lon: this.location.longitude,
+            }
+          }
+          return {};
+        }
       },
       created() {
         this.getNow()
@@ -227,7 +226,7 @@ h2 {
   background-position: center;
   color: #fff;
   position: relative;
-  
+
   overflow-x: hidden;
 }
 .weather-app > img {
@@ -243,13 +242,13 @@ h2 {
 
 /* .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 3s !important; 
+  transition: opacity 3s !important;
   scale: 2;
 }
 
 .fade-enter,
 .fade-leave-to{
-  opacity: 0 !important; 
+  opacity: 0 !important;
 } */
 
 .weather-app::before {
