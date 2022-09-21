@@ -121,7 +121,7 @@ tr {
   font-size: 3rem;
 }
 .upperRow > div > img {
-  scale: 2
+  transform: scale(2)
 }
 .left-col {
   justify-content: flex-start;
@@ -203,7 +203,7 @@ a.more-details-btn {
 .btn-more:hover {
   background: rgba(0, 0, 0, 0.5);
   color: #fa6d1b;
-  scale: 1.1;
+  transform: scale(1.1); 
 }
 @media screen and (max-width: 500px) {
   .btn-more{
