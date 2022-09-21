@@ -203,7 +203,7 @@ a.more-details-btn {
 .btn-more:hover {
   background: rgba(0, 0, 0, 0.5);
   color: #fa6d1b;
-  transform: scale(1.1); 
+  transform: scale(1.1) translate(0,-20vh); 
 }
 @media screen and (max-width: 500px) {
   .btn-more{
@@ -215,6 +215,9 @@ a.more-details-btn {
   }
   .containerr{
     left: -15px
+  }
+  .btn-more:hover {
+    transform: scale(1.1) translate(7vw,-15vh); 
   }
 }
 </style>
