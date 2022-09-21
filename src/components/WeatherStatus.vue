@@ -198,7 +198,7 @@ a.more-details-btn {
   background: rgba(0, 0, 0, 0.3);
 }
 .btn-more > i {
-  rotate: 90deg;
+  transform: rotate(90deg)
 }
 .btn-more:hover {
   background: rgba(0, 0, 0, 0.5);
