@@ -188,7 +188,7 @@ a.more-details-btn {
   width: 7vh;
   border-radius: 10px;
   position: absolute;
-  translate: 0 -20vh;
+  transform: translate(0,-20vh);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,7 +207,8 @@ a.more-details-btn {
 }
 @media screen and (max-width: 500px) {
   .btn-more{
-    translate: 7vw -15vh;
+    /* translate: 7vw -15vh; */
+    transform: translate(7vw,-15vh);
   }
   .right-col{
     width: 8%;
